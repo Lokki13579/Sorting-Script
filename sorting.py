@@ -18,12 +18,15 @@ class Sorting:
                     print(
                         "Usage: sorting.py [-a category:format] [-d format] [[-n] | [format] | None]"
                     )
+                    break
                 case ["-a", arg]:
                     new_category, new_format = arg.split(":")
                     if new_category not in self.formats:
                         self.formats[new_category] = []
-                    if new_format not in self.formats[new_category]:
-                        self.formats[new_category].append(new_format)
+                    for cat, formats in self.formats.items():
+                        if new_format in formats:
+                            formats.remove(new_format)
+                    self.formats[new_category].append(new_format)
                     self.save_formats()
                 case ["-d", arg]:
                     for key, vals in self.formats.items():

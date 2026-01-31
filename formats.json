@@ -1,0 +1,49 @@
+{
+    "pictures": [
+        "png",
+        "jpg",
+        "jpeg"
+    ],
+    "music": [
+        "wav",
+        "mp3"
+    ],
+    "videos": [
+        "mp4",
+        "mkv"
+    ],
+    "archieves": [
+        "tar",
+        "gz",
+        "7z",
+        "xz",
+        "zip",
+        "rar"
+    ],
+    "tables": [
+        "xlsx",
+        "csv"
+    ],
+    "documents": [
+        "docx",
+        "odt"
+    ],
+    "pdf": [
+        "pdf"
+    ],
+    "css": [
+        "css"
+    ],
+    "iso": [
+        "iso"
+    ],
+    "ico": [
+        "ico"
+    ],
+    "presentations": [
+        "pptx"
+    ],
+    "gifs": [
+        "gif"
+    ]
+}

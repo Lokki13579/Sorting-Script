@@ -6,8 +6,8 @@
     ],
     "music": [
         "wav",
-        "mp3",
-        "m4a"
+        "m4a",
+        "mp3"
     ],
     "videos": [
         "mp4",
@@ -41,7 +41,9 @@
     "ico": [
         "ico"
     ],
-    "presentations": [],
+    "presentations": [
+        "pptx"
+    ],
     "gifs": [
         "gif"
     ]

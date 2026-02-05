@@ -18,7 +18,7 @@ class Sorting:
             match args[0:2]:
                 case [("-h" | "--help")]:
                     print(
-                        "Usage: sorting.py [-a category:format] [-d format] [-i path] [--edit-sorting-folder path] [[-n] | [format] | None]"
+                        "Usage: sorting.py [-a category:format] [-d format] [-i path] [--edit-sorting-folder path] [--dump-config] [--dump-config-file path] [--add-origin-folder path] [--remove-origin-folder path] [[-n] | [format] | None]"
                     )
                     break
                 case ["-a", arg]:
@@ -33,6 +33,19 @@ class Sorting:
                     self.__import_settings(arg)
                 case ["--edit-sorting-folder", arg]:
                     self.__edit_sorting_folder(arg)
+                    quit()
+                case ["--add-origin-folder", arg]:
+                    self.__add_origin_folder(arg)
+                    quit()
+                case ["--remove-origin-folder", arg]:
+                    self.__remove_origin_folder(arg)
+                    quit()
+                case ["--dump-config"]:
+                    print(self.__dump_config())
+                    quit()
+                case ["--dump-config-file", arg]:
+                    self.__dump_config_file(arg)
+                    quit()
                 case ["-n"]:
                     break
                 case [format]:
@@ -43,6 +56,7 @@ class Sorting:
                     break
                 case _:
                     print("Unknown argument")
+                    quit()
                     break
             args = args[2:]
 
@@ -56,7 +70,6 @@ class Sorting:
         for key, vals in self.formats.items():
             if format in vals:
                 vals.remove(format)
-                print("removed", format)
                 break
         else:
             print("Unknown format")
@@ -76,10 +89,29 @@ class Sorting:
         self.settings["main_folder"] = (folder_path + "/").replace("//", "/")
         self.save_settings()
 
+    def __dump_config(self):
+        return {"settings": self.settings, "formats": self.formats}
+
+    def __dump_config_file(self, file_path):
+        with open(file_path, "w") as f:
+            json.dump(self.__dump_config(), f, indent=4)
+
+    def __add_origin_folder(self, folder_path):
+        new_folder = (folder_path + "/").replace("//", "/")
+        if new_folder not in self.settings["source_folder"]:
+            self.settings["source_folder"] += f"^{new_folder}"
+        self.save_settings()
+
+    def __remove_origin_folder(self, folder_path):
+        self.settings["source_folder"] = self.settings["source_folder"].replace(
+            f"^{(folder_path + '/').replace('//', '').replace('~', os.path.expanduser('~'))}/",
+            "",
+        )
+        self.save_settings()
+
     def sorting(self, thisformat=None):
         if thisformat == None:
             thisformat = r".*"
-        print("sorting")
         for category, formats in self.formats.items():
             subprocess.run(
                 ["mkdir", "-p", f"{self.settings['main_folder']}/{category}"]
@@ -104,10 +136,13 @@ class Sorting:
                                     "mv",
                                     "-v",
                                     file,
-                                    f"{self.settings['main_folder']}/{category}/"
+                                    f"{self.settings['main_folder']}{category}/"
                                     + relative_path,
                                 ]
                             )
+                    quit()
+        print("Unknown argument")
+        quit()
 
     def get_formats_path(self):
         return os.path.join(os.path.expanduser("~/.config/sorting"), "formats.json")

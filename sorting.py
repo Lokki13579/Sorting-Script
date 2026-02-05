@@ -26,6 +26,8 @@ class Sorting:
                     self.save_settings()
                 case ["-r", arg]:
                     ...
+                case ["-R", arg]:
+                    ...
                 case ["-d", arg]:
                     self.__delete_format(arg)
                     self.save_settings()

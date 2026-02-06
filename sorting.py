@@ -18,19 +18,48 @@ class Sorting:
             match args[0:2]:
                 case [("-h" | "--help")]:
                     print(
-                        "Usage: sorting.py [-a category:format] [-d format] [-i path] [--edit-sorting-folder path] [--dump-config] [--dump-config-file path] [--add-origin-folder path] [--remove-origin-folder path] [[-n] | [format] | None]"
+                        "Usage: sorting.py [-a category:format] [-d format] [-i path] [--edit-sorting-folder path] [--dump-config] [--dump-config-file path] [--add-origin-folder path] [--remove-origin-folder path] [-f path] [[-r | -R] old:new] [[-n] | [format] | None]"
                     )
                     break
                 case ["-a", arg]:
                     self.__add_new_format(*arg.split(":"))
                     self.save_settings()
                 case ["-r", arg]:
-                    ...
+                    subprocess.run(
+                        [
+                            "mkdir",
+                            "-p",
+                            f"{self.settings['main_folder']}/{arg.split(':')[1]}",
+                        ]
+                    )
+                    self.__rename_category(*arg.split(":"))
+                    self.__sort_folder(
+                        f"{self.settings['main_folder']}/{arg.split(':')[0]}"
+                    )
+                    subprocess.run(
+                        [
+                            "rm",
+                            "-rf",
+                            f"{self.settings['main_folder']}/{arg.split(':')[0]}",
+                        ]
+                    )
                 case ["-R", arg]:
-                    ...
+                    # sorting -R music:музыка
+                    old_category, new_category = arg.split(":")
+                    subprocess.run(
+                        [
+                            "mkdir",
+                            "-p",
+                            f"{self.settings['main_folder']}/{new_category}",
+                        ]
+                    )
+                    self.__rename_category(old_category, new_category)
                 case ["-d", arg]:
                     self.__delete_format(arg)
                     self.save_settings()
+                case ["-f", *arg]:
+                    self.__sort_folder(*(args[1:3]))
+                    quit()
                 case ["-i", arg]:
                     self.__import_settings(arg)
                 case ["--edit-sorting-folder", arg]:
@@ -87,6 +116,46 @@ class Sorting:
             self.formats = {}
             self.settings = {}
 
+    def __rename_category(self, old_category, new_category):
+        if old_category in self.formats:
+            self.formats[new_category] = self.formats.pop(old_category)
+            self.save_settings()
+
+    def __sort_folder(self, folder_path, thisformat=None):
+        if thisformat == None:
+            thisformat = r".*"
+        elif self.isValid(thisformat):
+            pass
+        else:
+            print("Unknown format")
+            quit()
+        for category, formats in self.formats.items():
+            subprocess.run(
+                ["mkdir", "-p", f"{self.settings['main_folder']}/{category}"]
+            )
+            for format in formats:
+                if re.match(thisformat, format):
+                    files = subprocess.run(
+                        ["fd", "--max-depth", "1", rf"\.{format}", folder_path],
+                        stdout=subprocess.PIPE,
+                    )
+                    files_output = list(
+                        map(
+                            lambda x: (x, x.replace(folder_path, "")),
+                            files.stdout.decode().splitlines(),
+                        )
+                    )
+                    for file, relative_path in files_output:
+                        subprocess.run(
+                            [
+                                "mv",
+                                "-v",
+                                file,
+                                f"{self.settings['main_folder']}/{category}/"
+                                + relative_path,
+                            ]
+                        )
+
     def __edit_sorting_folder(self, folder_path):
         self.settings["main_folder"] = (folder_path + "/").replace("//", "/")
         self.save_settings()
@@ -111,39 +180,13 @@ class Sorting:
         )
         self.save_settings()
 
+    def isValid(self, format):
+        return format in [j for i in self.formats.values() for j in i]
+
     def sorting(self, thisformat=None):
-        if thisformat == None:
-            thisformat = r".*"
-        for category, formats in self.formats.items():
-            subprocess.run(
-                ["mkdir", "-p", f"{self.settings['main_folder']}/{category}"]
-            )
-            catFiles = []
-            for format in formats:
-                if re.match(thisformat, format):
-                    for dir in self.settings["source_folder"].split("^"):
-                        files = subprocess.run(
-                            ["fd", "--max-depth", "1", rf"\.{format}", dir],
-                            stdout=subprocess.PIPE,
-                        )
-                        files_output = list(
-                            map(
-                                lambda x: (x, x.replace(dir, "")),
-                                files.stdout.decode().splitlines(),
-                            )
-                        )
-                        for file, relative_path in files_output:
-                            subprocess.run(
-                                [
-                                    "mv",
-                                    "-v",
-                                    file,
-                                    f"{self.settings['main_folder']}{category}/"
-                                    + relative_path,
-                                ]
-                            )
-                    quit()
-        print("Unknown argument")
+
+        for dir in self.settings["source_folder"].split("^"):
+            self.__sort_folder(dir, thisformat)
         quit()
 
     def get_formats_path(self):
